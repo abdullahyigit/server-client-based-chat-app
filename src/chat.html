@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Room</title>
+    <style>
+        *,
+        *:before,
+        *:after {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #080710;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .background {
+            width: 430px;
+            height: 520px;
+            position: absolute;
+            transform: translate(-50%, -50%);
+            left: 50%;
+            top: 50%;
+        }
+
+        .background .shape {
+            height: 200px;
+            width: 200px;
+            position: absolute;
+            border-radius: 50%;
+        }
+
+        .shape:first-child {
+            background: linear-gradient(
+                #1845ad,
+                #23a2f6
+            );
+            left: -80px;
+            top: -80px;
+        }
+
+        .shape:last-child {
+            background: linear-gradient(
+                to right,
+                #ff512f,
+                #f09819
+            );
+            right: -30px;
+            bottom: -80px;
+        }
+
+        .chat-container {
+            height: 600px;
+            width: 400px;
+            background-color: rgba(255, 255, 255, 0.13);
+            position: absolute;
+            transform: translate(-50%, -50%);
+            top: 50%;
+            left: 50%;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 40px rgba(8, 7, 16, 0.6);
+            padding: 20px 35px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-container * {
+            font-family: 'Poppins', sans-serif;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+            outline: none;
+            border: none;
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .chat-header h3 {
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        .chat-header .back-button {
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            background-color: rgba(255, 255, 255, 0.07);
+        }
+
+        .chat-input {
+            display: flex;
+        }
+
+        .chat-input input {
+            flex-grow: 1;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.07);
+            border-radius: 3px;
+            padding: 0 10px;
+            font-size: 14px;
+            font-weight: 300;
+            color: #000000;
+        }
+
+        .chat-input input::placeholder {
+            color: #e5e5e5;
+        }
+
+        .chat-input button {
+            width: 100px;
+            background-color: #ffffff;
+            color: #080710;
+            padding: 0 15px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        @media screen and (max-width: 768px) {
+            .background {
+                display: none;
+            }
+
+            .chat-container {
+                width: 90%;
+                height: auto;
+                padding: 20px;
+            }
+
+            .chat-header h3 {
+                font-size: 20px;
+            }
+
+            .chat-input input {
+                font-size: 12px;
+            }
+
+            .chat-input button {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background">
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h3 id="room-name">Chat Room</h3>
+            <button class="back-button" id="back-button">&larr;</button>
+        </div>
+        <div id="messages" class="chat-messages"></div>
+        <div class="chat-input">
+            <input id="input" type="text" placeholder="Type a message..." autofocus />
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+    <script>
+        const { ipcRenderer } = require('electron');
+        const messagesDiv = document.getElementById('messages');
+        const input = document.getElementById('input');
+        const sendButton = document.getElementById('send-button');
+        const backButton = document.getElementById('back-button');
+        const roomName = document.getElementById('room-name');
+
+        ipcRenderer.on('set-room-name', (event, name) => {
+            roomName.textContent = name;
+        });
+
+        function addMessage(sender, message) {
+            const messageElement = document.createElement('div');
+            messageElement.textContent = `${sender}: ${message}`;
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        sendButton.addEventListener('click', () => {
+            const message = input.value.trim();
+            if (message) {
+                ipcRenderer.send('send-message', message);
+                addMessage('You', message);
+                input.value = '';
+            }
+        });
+
+        input.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                sendButton.click();
+            }
+        });
+
+        backButton.addEventListener('click', () => {
+            ipcRenderer.send('leave-room');
+        });
+
+    </script>
+</body>
+</html>
+
